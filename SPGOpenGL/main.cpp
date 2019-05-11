@@ -32,7 +32,9 @@ float xv = 10, yv = 12, zv = 30; //originea sistemului de observare
 glm::vec3 lightPos(0, 20000, 0);
 glm::vec3 viewPos(2, 3, 6);
 
-float axisRotAngle = PI / 16.0; // unghiul de rotatie in jurul propriei axe
+float axisRotAngleFirstCar = PI / 16.0; // unghiul de rotatie in jurul propriei axe
+float axisRotAngleSecondCar = PI / 16.0;
+
 float radius = 2;
 float scaleFactor = 2;
 float scalePlantFactor = 0.2;
@@ -97,7 +99,7 @@ void init()
 	
 	firstModelSize = vertices.size();
 
-	res = loadOBJ("obj/indoor plant_02.obj", vertices, uvs, normals);
+	res = loadOBJ("obj/lego.obj", vertices, uvs, normals);
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 1, 1, 0);
@@ -155,12 +157,10 @@ void display()
 
 	GLuint viewPosLoc = glGetUniformLocation(shader_programme, "viewPos");
 	glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
-
-	modelMatrix = glm::mat4(); // matricea de modelare este matricea identitate
-	modelMatrix *= glm::rotate(axisRotAngle, glm::vec3(0, 1, 0));
-	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-	
-
+	////lego person
+	modelMatrix = glm::mat4();
+	modelMatrix *= glm::scale(glm::vec3(0.05, 0.05, 0.05));
+	modelMatrix *= glm::translate(glm::vec3(0, 0, 0));
 	GLuint modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
 
@@ -168,13 +168,15 @@ void display()
 	GLuint normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
 	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-	glDrawArrays(GL_TRIANGLES, 0, firstModelSize);
-
-
+	glDrawArrays(GL_TRIANGLES, firstModelSize, vertices.size() - firstModelSize);
+	//first car
 	modelMatrix = glm::mat4(); // matricea de modelare este matricea identitate
-	modelMatrix *= glm::rotate(axisRotAngle, glm::vec3(0, 1, 0));
-	modelMatrix *= glm::scale(glm::vec3(scalePlantFactor, scalePlantFactor, scalePlantFactor));
-	modelMatrix *= glm::translate(glm::vec3(30, 0, 0));
+	//modelMatrix *= glm::rotate(axisRotAngleFirstCar, glm::vec3(0, 1, 0));
+	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+
+	modelMatrix *= glm::translate(glm::vec3(-5, 0, 0));
+	modelMatrix *= glm::rotate(axisRotAngleFirstCar, glm::vec3(0, 1, 0));
+
 	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
 
@@ -182,7 +184,23 @@ void display()
 	normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
 	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-	glDrawArrays(GL_TRIANGLES, firstModelSize, vertices.size());
+	glDrawArrays(GL_TRIANGLES, 0, firstModelSize);
+
+	//second car
+	modelMatrix = glm::mat4(); // matricea de modelare este matricea identitate
+	//modelMatrix *= glm::rotate(axisRotAngleSecondCar, glm::vec3(0, 1, 0));
+	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+	modelMatrix *= glm::translate(glm::vec3(5, 0, 0));
+	modelMatrix *= glm::rotate(axisRotAngleSecondCar, glm::vec3(0, 1, 0));
+
+	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
+	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
+
+	normalMatrix = glm::transpose(glm::inverse(modelMatrix));
+	normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
+	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+
+	glDrawArrays(GL_TRIANGLES, 0, firstModelSize);
 	glutSwapBuffers();
 }
 
@@ -205,16 +223,21 @@ void keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'a':
-		axisRotAngle += 0.1;
-		if (axisRotAngle > 2 * PI) 
-			axisRotAngle = 0;
-
+		axisRotAngleFirstCar += 0.1;
+		axisRotAngleSecondCar -= 0.1;
+		if (axisRotAngleFirstCar > 2 * PI) 
+			axisRotAngleFirstCar = 0;
+		if (axisRotAngleSecondCar < 0)
+			axisRotAngleSecondCar = 2 * PI;
 		break;
 	case 's':
 
-		axisRotAngle -= 0.1;
-		if (axisRotAngle < 0)
-			axisRotAngle = 2 * PI;
+		axisRotAngleFirstCar -= 0.1;
+		axisRotAngleSecondCar += 0.1;
+		if (axisRotAngleFirstCar < 0)
+			axisRotAngleFirstCar = 2 * PI;
+		if (axisRotAngleSecondCar > 2 * PI)
+			axisRotAngleSecondCar = 0;
 		break;
 	case '+':
 		scaleFactor += 0.3;
