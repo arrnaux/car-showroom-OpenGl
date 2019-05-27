@@ -11,27 +11,13 @@
 #include <vector>
 #include <stack>
 #include <conio.h>
-
 #include "objloader.hpp"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include"stb_image.h"
-#include "main.h"
 
 #define PI glm::pi<float>()
 
-#define KEY_UP 72
-
-#define KEY_DOWN 80
-
-#define KEY_LEFT 75
-
-#define KEY_RIGHT 77
-
-GLuint shader_programme,vao;
+GLuint shader_programme, vao;
 glm::mat4 projectionMatrix, viewMatrix, viewMatrixPerson, modelMatrix;
 std::stack<glm::mat4> modelStack;
-
 std::vector< glm::vec3 > verticesNormals;
 
 GLuint vaoObj, vboObj;
@@ -43,9 +29,8 @@ std::vector< glm::vec3 > normals;
 float xv = 10, yv = 12, zv = 30; //originea sistemului de observare
 
 glm::vec3 lightPos(0, 20000, 0);
-glm::vec3 lightPosLego(0, 20000, 0);
+//glm::vec3 lightPosLego(0, 20000, 0);
 glm::vec3 viewPos(2, 3, 6);
-
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -55,8 +40,8 @@ float axisRotAngleSecondCar = PI / 16.0f;
 float move = 0;
 float direction = 0;
 float radius = 2;
-float scaleFactor = 2;
-float scalePlantFactor = 0.2f;
+float scalingFactorCar = 2;
+float scalingFactorLego = 0.05;
 float obs_move = 0.0;
 float obs_dir = 0.0;
 size_t firstModelSize;
@@ -117,24 +102,23 @@ void init()
 	printf("Renderer: %s\n", renderer);
 	printf("OpenGL version supported %s\n", version);
 
-
 	bool res = loadOBJ("obj/Dodge/CHALLENGER71.obj", vertices, uvs, normals);
-	
+
 	firstModelSize = vertices.size();
 
 	res = loadOBJ("obj/lego.obj", vertices, uvs, normals);
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1, 1, 1, 0);
-	
+
 	glewInit();
-	
+
 	verticesNormals = vertices;
 	verticesNormals.insert(verticesNormals.end(), normals.begin(), normals.end());
 
 	glGenBuffers(1, &vboObj);
 	glBindBuffer(GL_ARRAY_BUFFER, vboObj);
-	glBufferData(GL_ARRAY_BUFFER, verticesNormals.size()*sizeof(glm::vec3), &verticesNormals[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, verticesNormals.size() * sizeof(glm::vec3), &verticesNormals[0], GL_STATIC_DRAW);
 
 	glGenVertexArrays(1, &vaoObj);
 	glBindVertexArray(vaoObj);
@@ -145,31 +129,13 @@ void init()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(vertices.size() * sizeof(glm::vec3)));
 
-	
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(firstModelSize * sizeof(glm::vec3)));
+
 	std::string vstext = textFileRead("vertex.vert");
 	std::string fstext = textFileRead("fragment.frag");
 	const char* vertex_shader = vstext.c_str();
 	const char* fragment_shader = fstext.c_str();
-
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char *data = stbi_load("obj/Dodge/CHALLEN1.png", &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-	}
-	stbi_image_free(data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vs, 1, &vertex_shader, NULL);
@@ -192,42 +158,31 @@ void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shader_programme);
-
 	glBindVertexArray(vaoObj);
 
-	GLuint lightPosLocLego = glGetUniformLocation(shader_programme, "lightPosLego");
-	glUniform3fv(lightPosLocLego, 1, glm::value_ptr(lightPosLego));
-	
 	GLuint lightPosLoc = glGetUniformLocation(shader_programme, "lightPos");
 	glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
 	GLuint viewPosLoc = glGetUniformLocation(shader_programme, "viewPos");
 	glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
 
-
-	////lego person
+	//draw lego person
 	modelMatrix = glm::mat4();
-	modelMatrix *= glm::scale(glm::vec3(0.05, 0.05, 0.05));
+	modelMatrix *= glm::scale(glm::vec3(scalingFactorLego, scalingFactorLego, scalingFactorLego));
 	modelMatrix *= glm::translate(glm::vec3(direction, 0, move));
 	GLuint modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrixPerson * modelMatrix));
 
-	glm::mat4 normalMatrixlego = glm::transpose(glm::inverse(modelMatrix));
-	GLuint normalMatrixLocLego = glGetUniformLocation(shader_programme, "normalMatrixLego");
-	glUniformMatrix4fv(normalMatrixLocLego, 1, GL_FALSE, glm::value_ptr(normalMatrixlego));
+	//assign normals to lego
+	glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelMatrix));
+	GLuint normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
+	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
 	glDrawArrays(GL_TRIANGLES, firstModelSize, vertices.size() - firstModelSize);
 
-	
-
-	//first car
-	
-
-	//viewMatrix = glm::mat4();
+	//draw first car
 	modelMatrix = glm::mat4(); // matricea de modelare este matricea identitate
-	//modelMatrix *= glm::rotate(axisRotAngleFirstCar, glm::vec3(0, 1, 0));
-	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-
+	modelMatrix *= glm::scale(glm::vec3(scalingFactorCar, scalingFactorCar, scalingFactorCar));
 	modelMatrix *= glm::translate(glm::vec3(-5, 0, 0));
 	modelMatrix *= glm::rotate(axisRotAngleFirstCar, glm::vec3(0, 1, 0));
 	modelMatrix *= glm::rotate(PI / 2, glm::vec3(0, 0, 1));
@@ -236,19 +191,16 @@ void display()
 	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
 
-	glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelMatrix));
-	GLuint normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
-	
-	
+	//assign normals to first car
+	normalMatrix = glm::transpose(glm::inverse(modelMatrix));
+	normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
 	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
-	
 	glDrawArrays(GL_TRIANGLES, 0, firstModelSize);
 
-	//second car
+	//draw second car
 	modelMatrix = glm::mat4(); // matricea de modelare este matricea identitate
-	//modelMatrix *= glm::rotate(axisRotAngleSecondCar, glm::vec3(0, 1, 0));
-	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+	modelMatrix *= glm::scale(glm::vec3(scalingFactorCar, scalingFactorCar, scalingFactorCar));
 	modelMatrix *= glm::translate(glm::vec3(5, 0, 0));
 	modelMatrix *= glm::rotate(axisRotAngleSecondCar, glm::vec3(0, 1, 0));
 	modelMatrix *= glm::rotate(-PI / 2, glm::vec3(0, 0, 1));
@@ -258,6 +210,7 @@ void display()
 	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
 
+	//assign normals to second car
 	normalMatrix = glm::transpose(glm::inverse(modelMatrix));
 	normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
 	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
@@ -278,7 +231,7 @@ void reshape(int w, int h)
 	- directia dupa care este orientat observatorul
 	*/
 	viewMatrix = glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	viewMatrixPerson= glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(obs_dir, 0, obs_move), glm::vec3(0, 1, 0));
+	viewMatrixPerson = glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(obs_dir, 0, obs_move), glm::vec3(0, 1, 0));
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -288,13 +241,12 @@ void keyboard(unsigned char key, int x, int y)
 	case 'a':
 		axisRotAngleFirstCar += 0.1f;
 		axisRotAngleSecondCar -= 0.1f;
-		if (axisRotAngleFirstCar > 2 * PI) 
+		if (axisRotAngleFirstCar > 2 * PI)
 			axisRotAngleFirstCar = 0;
 		if (axisRotAngleSecondCar < 0)
 			axisRotAngleSecondCar = 2 * PI;
 		break;
 	case 's':
-
 		axisRotAngleFirstCar -= 0.1f;
 		axisRotAngleSecondCar += 0.1f;
 		if (axisRotAngleFirstCar < 0)
@@ -303,36 +255,30 @@ void keyboard(unsigned char key, int x, int y)
 			axisRotAngleSecondCar = 0;
 		break;
 	case '+':
-		scaleFactor += 0.3f;
-		scalePlantFactor += 0.1f;
-		std::cout << "Tasta +\n";
+		scalingFactorCar += 0.3f;
+		scalingFactorLego += 0.01f;
 		break;
 	case '-':
-		scaleFactor -= 0.03f;
-		scalePlantFactor -= 0.1f;
+		scalingFactorCar -= 0.3f;
+		scalingFactorLego -= 0.01f;
 		break;
 	case 'i':
-		std::cout << "Tasta sus\n";
-		//zv++;
 		move -= 5.0f;
-		obs_move -= 1.0f;
+		//obs_move -= 1.0f;
 		break;
 	case 'k':
-		std::cout << "Tasta jos\n";
 		move += 5.0f;
-		obs_move += 1.0f;
+		//obs_move += 1.0f;
 		break;
 	case 'j':
-		std::cout << "Tasta stanga\n";
 		direction -= 5.0f;
 		break;
 	case 'l':
-		std::cout << "Tasta dreapta\n";
 		direction += 5.0f;
 		break;
 
 	};
-	glutPostRedisplay(); // cauzeaza redesenarea ferestrei
+	glutPostRedisplay(); //redraw the window
 }
 
 int main(int argc, char** argv)
@@ -341,7 +287,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowPosition(200, 200);
 	glutInitWindowSize(700, 700);
-	glutCreateWindow("SPG");
+	glutCreateWindow("SPG thuglife");
 	init();
 
 	glutDisplayFunc(display);
