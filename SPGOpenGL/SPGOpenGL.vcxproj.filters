@@ -25,5 +25,9 @@
     <ClInclude Include="objloader.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="include\stb_image.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h" />
   </ItemGroup>
 </Project>

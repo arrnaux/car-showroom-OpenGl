@@ -2,12 +2,17 @@
 
 layout(location = 0) in vec3 vPos;
 layout(location = 1) in vec3 vNormal;
+layout(location = 2) in vec3 vNormalLego;
+layout(location = 3) in vec3 vPosLego;
 
 uniform mat4 modelViewProjectionMatrix;
 uniform mat4 normalMatrix;
+uniform mat4 normalMatrixLego;
 
 out vec3 normal;
+out vec3 normalLego;
 out vec3 pos;
+out vec3 posLego;
 
 void main() 
 {
@@ -16,5 +21,9 @@ void main()
 	normal = vNormal;
 	normal = vec3(normalMatrix * vec4(normal, 1));
 
+	normalLego = vNormalLego;
+	normalLego = vec3(normalMatrixLego * vec4(normalLego, 1));
+
 	pos = vPos;
+	posLego = vPosLego;
 }

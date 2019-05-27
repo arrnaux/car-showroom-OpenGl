@@ -10,13 +10,26 @@
 #include <glm/gtc/constants.hpp>
 #include <vector>
 #include <stack>
+#include <conio.h>
 
 #include "objloader.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include"stb_image.h"
+#include "main.h"
+
 #define PI glm::pi<float>()
 
-GLuint shader_programme;
-glm::mat4 projectionMatrix, viewMatrix, modelMatrix;
+#define KEY_UP 72
+
+#define KEY_DOWN 80
+
+#define KEY_LEFT 75
+
+#define KEY_RIGHT 77
+
+GLuint shader_programme,vao;
+glm::mat4 projectionMatrix, viewMatrix, viewMatrixPerson, modelMatrix;
 std::stack<glm::mat4> modelStack;
 
 std::vector< glm::vec3 > verticesNormals;
@@ -30,16 +43,26 @@ std::vector< glm::vec3 > normals;
 float xv = 10, yv = 12, zv = 30; //originea sistemului de observare
 
 glm::vec3 lightPos(0, 20000, 0);
+glm::vec3 lightPosLego(0, 20000, 0);
 glm::vec3 viewPos(2, 3, 6);
 
-float axisRotAngleFirstCar = PI / 16.0; // unghiul de rotatie in jurul propriei axe
-float axisRotAngleSecondCar = PI / 16.0;
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+float axisRotAngleFirstCar = PI / 16.0f; // unghiul de rotatie in jurul propriei axe
+float axisRotAngleSecondCar = PI / 16.0f;
+float move = 0;
+float direction = 0;
 float radius = 2;
 float scaleFactor = 2;
-float scalePlantFactor = 0.2;
+float scalePlantFactor = 0.2f;
+float obs_move = 0.0;
+float obs_dir = 0.0;
+size_t firstModelSize;
 
-int firstModelSize;
+unsigned int texture1;
+
 void printShaderInfoLog(GLuint obj)
 {
 	int infologLength = 0;
@@ -95,7 +118,7 @@ void init()
 	printf("OpenGL version supported %s\n", version);
 
 
-	bool res = loadOBJ("obj/model.obj", vertices, uvs, normals);
+	bool res = loadOBJ("obj/Dodge/CHALLENGER71.obj", vertices, uvs, normals);
 	
 	firstModelSize = vertices.size();
 
@@ -128,6 +151,26 @@ void init()
 	const char* vertex_shader = vstext.c_str();
 	const char* fragment_shader = fstext.c_str();
 
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char *data = stbi_load("obj/Dodge/CHALLEN1.png", &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+	}
+	stbi_image_free(data);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 	GLuint vs = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vs, 1, &vertex_shader, NULL);
 	glCompileShader(vs);
@@ -152,38 +195,54 @@ void display()
 
 	glBindVertexArray(vaoObj);
 
+	GLuint lightPosLocLego = glGetUniformLocation(shader_programme, "lightPosLego");
+	glUniform3fv(lightPosLocLego, 1, glm::value_ptr(lightPosLego));
+	
 	GLuint lightPosLoc = glGetUniformLocation(shader_programme, "lightPos");
 	glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
 	GLuint viewPosLoc = glGetUniformLocation(shader_programme, "viewPos");
 	glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
+
+
 	////lego person
 	modelMatrix = glm::mat4();
 	modelMatrix *= glm::scale(glm::vec3(0.05, 0.05, 0.05));
-	modelMatrix *= glm::translate(glm::vec3(0, 0, 0));
+	modelMatrix *= glm::translate(glm::vec3(direction, 0, move));
 	GLuint modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
-	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
+	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrixPerson * modelMatrix));
 
-	glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelMatrix));
-	GLuint normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
-	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
+	glm::mat4 normalMatrixlego = glm::transpose(glm::inverse(modelMatrix));
+	GLuint normalMatrixLocLego = glGetUniformLocation(shader_programme, "normalMatrixLego");
+	glUniformMatrix4fv(normalMatrixLocLego, 1, GL_FALSE, glm::value_ptr(normalMatrixlego));
 
 	glDrawArrays(GL_TRIANGLES, firstModelSize, vertices.size() - firstModelSize);
+
+	
+
 	//first car
+	
+
+	//viewMatrix = glm::mat4();
 	modelMatrix = glm::mat4(); // matricea de modelare este matricea identitate
 	//modelMatrix *= glm::rotate(axisRotAngleFirstCar, glm::vec3(0, 1, 0));
 	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
 
 	modelMatrix *= glm::translate(glm::vec3(-5, 0, 0));
 	modelMatrix *= glm::rotate(axisRotAngleFirstCar, glm::vec3(0, 1, 0));
-
+	modelMatrix *= glm::rotate(PI / 2, glm::vec3(0, 0, 1));
+	modelMatrix *= glm::rotate(PI, glm::vec3(1, 0, 0));
+	modelMatrix *= glm::rotate(PI / 2, glm::vec3(0, 1, 0));
 	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
 
-	normalMatrix = glm::transpose(glm::inverse(modelMatrix));
-	normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
+	glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelMatrix));
+	GLuint normalMatrixLoc = glGetUniformLocation(shader_programme, "normalMatrix");
+	
+	
 	glUniformMatrix4fv(normalMatrixLoc, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 
+	
 	glDrawArrays(GL_TRIANGLES, 0, firstModelSize);
 
 	//second car
@@ -192,6 +251,9 @@ void display()
 	modelMatrix *= glm::scale(glm::vec3(scaleFactor, scaleFactor, scaleFactor));
 	modelMatrix *= glm::translate(glm::vec3(5, 0, 0));
 	modelMatrix *= glm::rotate(axisRotAngleSecondCar, glm::vec3(0, 1, 0));
+	modelMatrix *= glm::rotate(-PI / 2, glm::vec3(0, 0, 1));
+	modelMatrix *= glm::rotate(-PI, glm::vec3(1, 0, 0));
+	modelMatrix *= glm::rotate(-PI / 2, glm::vec3(0, 1, 0));
 
 	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
@@ -216,6 +278,7 @@ void reshape(int w, int h)
 	- directia dupa care este orientat observatorul
 	*/
 	viewMatrix = glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	viewMatrixPerson= glm::lookAt(glm::vec3(xv, yv, zv), glm::vec3(obs_dir, 0, obs_move), glm::vec3(0, 1, 0));
 }
 
 void keyboard(unsigned char key, int x, int y)
@@ -223,8 +286,8 @@ void keyboard(unsigned char key, int x, int y)
 	switch (key)
 	{
 	case 'a':
-		axisRotAngleFirstCar += 0.1;
-		axisRotAngleSecondCar -= 0.1;
+		axisRotAngleFirstCar += 0.1f;
+		axisRotAngleSecondCar -= 0.1f;
 		if (axisRotAngleFirstCar > 2 * PI) 
 			axisRotAngleFirstCar = 0;
 		if (axisRotAngleSecondCar < 0)
@@ -232,20 +295,42 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 's':
 
-		axisRotAngleFirstCar -= 0.1;
-		axisRotAngleSecondCar += 0.1;
+		axisRotAngleFirstCar -= 0.1f;
+		axisRotAngleSecondCar += 0.1f;
 		if (axisRotAngleFirstCar < 0)
 			axisRotAngleFirstCar = 2 * PI;
 		if (axisRotAngleSecondCar > 2 * PI)
 			axisRotAngleSecondCar = 0;
 		break;
 	case '+':
-		scaleFactor += 0.3;
-		scalePlantFactor += 0.1;
+		scaleFactor += 0.3f;
+		scalePlantFactor += 0.1f;
+		std::cout << "Tasta +\n";
 		break;
 	case '-':
-		scaleFactor -= 0.03;
-		scalePlantFactor -= 0.1;
+		scaleFactor -= 0.03f;
+		scalePlantFactor -= 0.1f;
+		break;
+	case 'i':
+		std::cout << "Tasta sus\n";
+		//zv++;
+		move -= 5.0f;
+		obs_move -= 1.0f;
+		break;
+	case 'k':
+		std::cout << "Tasta jos\n";
+		move += 5.0f;
+		obs_move += 1.0f;
+		break;
+	case 'j':
+		std::cout << "Tasta stanga\n";
+		direction -= 5.0f;
+		break;
+	case 'l':
+		std::cout << "Tasta dreapta\n";
+		direction += 5.0f;
+		break;
+
 	};
 	glutPostRedisplay(); // cauzeaza redesenarea ferestrei
 }
