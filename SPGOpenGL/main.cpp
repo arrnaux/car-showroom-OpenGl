@@ -28,13 +28,14 @@ std::vector< glm::vec3 > normals;
 
 float xv = 10, yv = 12, zv = 30; //originea sistemului de observare
 
-glm::vec3 lightPos(0, 20000, 0);
-//glm::vec3 lightPosLego(0, 20000, 0);
-glm::vec3 viewPos(2, 3, 6);
+glm::vec3 lightPos(0, 100, 0);
+glm::vec3 lightPos2(-1000, 1000, 0);
+glm::vec3 viewPos(0, 0, 0);
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
+float axisRotAngleLego = 0 ;
 float axisRotAngleFirstCar = PI / 16.0f; // unghiul de rotatie in jurul propriei axe
 float axisRotAngleSecondCar = PI / 16.0f;
 float move = 0;
@@ -42,11 +43,9 @@ float direction = 0;
 float radius = 2;
 float scalingFactorCar = 2;
 float scalingFactorLego = 0.05;
-float obs_move = 0.0;
-float obs_dir = 0.0;
+float obs_dir;
+float obs_move;
 size_t firstModelSize;
-
-unsigned int texture1;
 
 void printShaderInfoLog(GLuint obj)
 {
@@ -129,7 +128,7 @@ void init()
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(vertices.size() * sizeof(glm::vec3)));
 
-	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)(firstModelSize * sizeof(glm::vec3)));
 
 	std::string vstext = textFileRead("vertex.vert");
@@ -169,7 +168,12 @@ void display()
 	//draw lego person
 	modelMatrix = glm::mat4();
 	modelMatrix *= glm::scale(glm::vec3(scalingFactorLego, scalingFactorLego, scalingFactorLego));
+	modelMatrix *= glm::rotate(axisRotAngleLego, glm::vec3(0, 1, 0));
 	modelMatrix *= glm::translate(glm::vec3(direction, 0, move));
+
+	GLuint lightPosition = glGetUniformLocation(shader_programme, "lightPos2");
+	glUniform3fv(lightPosition, 1, glm::value_ptr(lightPos2));
+
 	GLuint modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrixPerson * modelMatrix));
 
@@ -257,11 +261,14 @@ void keyboard(unsigned char key, int x, int y)
 	case '+':
 		scalingFactorCar += 0.3f;
 		scalingFactorLego += 0.01f;
+		
 		break;
 	case '-':
 		scalingFactorCar -= 0.3f;
 		scalingFactorLego -= 0.01f;
 		break;
+	case 'c':
+		axisRotAngleLego += PI / 2;
 	case 'i':
 		move -= 5.0f;
 		//obs_move -= 1.0f;
