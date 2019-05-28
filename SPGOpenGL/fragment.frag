@@ -34,9 +34,9 @@ void main()
 	vec3 objectColor = vec3(1.0, 1.0, 1.0);
 	vec3 lightColor = vec3(0.0, 1, 1.0);
 	vec3 ambient = vec3(0.1);
-	vec3 specular = vec3(0.8);
+	vec3 specular = vec3(0.6);
 	vec3 color;
-	float specPower = 32;
+	float specPower = 16;
 	//if (vec3(gl_LightSource[0].position) != vec3(0.0, 0.0, 0.0))
 	//	light += light0();
 	//if (vec3(gl_LightSource[1].position) != vec3(0.0, 0.0, 0.0))
@@ -49,6 +49,8 @@ void main()
 
 	color += lighting(objectColor, pos, normal, lightPos, viewPos, ambient, lightColor, specular, specPower);
 	lightColor = vec3(1.0, 0.0, 0);
+	specPower = 32;
+	specular = vec3(0.85);
 	color += lighting(objectColor, posLego, normal, lightPos2, viewPos, ambient, lightColor, specular, specPower);
 	
 	fragColor = vec4(color, 1.0);

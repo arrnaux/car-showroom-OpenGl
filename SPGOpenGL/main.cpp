@@ -35,7 +35,7 @@ glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-float axisRotAngleLego = 0 ;
+float axisRotAngleLego = 0;
 float axisRotAngleFirstCar = PI / 16.0f; // unghiul de rotatie in jurul propriei axe
 float axisRotAngleSecondCar = PI / 16.0f;
 float move = 0;
@@ -165,14 +165,14 @@ void display()
 	GLuint viewPosLoc = glGetUniformLocation(shader_programme, "viewPos");
 	glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
 
+	GLuint lightPosition = glGetUniformLocation(shader_programme, "lightPos2");
+	glUniform3fv(lightPosition, 1, glm::value_ptr(lightPos2));
+
 	//draw lego person
 	modelMatrix = glm::mat4();
 	modelMatrix *= glm::scale(glm::vec3(scalingFactorLego, scalingFactorLego, scalingFactorLego));
 	modelMatrix *= glm::translate(glm::vec3(direction, 0, move));
 	modelMatrix *= glm::rotate(axisRotAngleLego, glm::vec3(0, 1, 0));
-
-	GLuint lightPosition = glGetUniformLocation(shader_programme, "lightPos2");
-	glUniform3fv(lightPosition, 1, glm::value_ptr(lightPos2));
 
 	GLuint modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrixPerson * modelMatrix));
@@ -261,7 +261,7 @@ void keyboard(unsigned char key, int x, int y)
 	case '+':
 		scalingFactorCar += 0.3f;
 		scalingFactorLego += 0.01f;
-		
+
 		break;
 	case '-':
 		scalingFactorCar -= 0.3f;
