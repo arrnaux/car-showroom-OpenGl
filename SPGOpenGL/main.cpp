@@ -28,8 +28,8 @@ std::vector< glm::vec3 > normals;
 
 float xv = 10, yv = 12, zv = 30; //originea sistemului de observare
 
-glm::vec3 lightPos(0, 100, 0);
-glm::vec3 lightPos2(-1000, 1000, 0);
+glm::vec3 lightPos(1000, 0, 0);
+glm::vec3 lightPos2(-1000, 0, 0);
 glm::vec3 viewPos(0, 0, 0);
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -168,8 +168,8 @@ void display()
 	//draw lego person
 	modelMatrix = glm::mat4();
 	modelMatrix *= glm::scale(glm::vec3(scalingFactorLego, scalingFactorLego, scalingFactorLego));
-	modelMatrix *= glm::rotate(axisRotAngleLego, glm::vec3(0, 1, 0));
 	modelMatrix *= glm::translate(glm::vec3(direction, 0, move));
+	modelMatrix *= glm::rotate(axisRotAngleLego, glm::vec3(0, 1, 0));
 
 	GLuint lightPosition = glGetUniformLocation(shader_programme, "lightPos2");
 	glUniform3fv(lightPosition, 1, glm::value_ptr(lightPos2));

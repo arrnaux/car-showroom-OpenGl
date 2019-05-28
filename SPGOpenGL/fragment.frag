@@ -32,7 +32,7 @@ vec3 lighting(vec3 objectColor, vec3 pos, vec3 normal, vec3 lightPos, vec3 viewP
 void main()
 {
 	vec3 objectColor = vec3(1.0, 1.0, 1.0);
-	vec3 lightColor = vec3(0.0, 1.0, 1.0);
+	vec3 lightColor = vec3(0.0, 1, 1.0);
 	vec3 ambient = vec3(0.1);
 	vec3 specular = vec3(0.8);
 	vec3 color;
@@ -48,8 +48,7 @@ void main()
 	//color += lighting(objectColor, posLego, normal, lightPos, viewPos, ambient, lightColor, specular, specPower);
 
 	color += lighting(objectColor, pos, normal, lightPos, viewPos, ambient, lightColor, specular, specPower);
-	//vec3 pos2 = vec3(-5, 5, 0);
-
+	lightColor = vec3(1.0, 0.0, 0);
 	color += lighting(objectColor, posLego, normal, lightPos2, viewPos, ambient, lightColor, specular, specPower);
 	
 	fragColor = vec4(color, 1.0);
