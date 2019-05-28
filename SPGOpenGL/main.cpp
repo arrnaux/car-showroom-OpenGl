@@ -183,7 +183,7 @@ void display()
 
 	lightPosLego=glm::vec3(direction, 0, move);
 
-	GLuint lightPosLocLego = glGetUniformLocation(shader_programme, "lightPos");
+	GLuint lightPosLocLego = glGetUniformLocation(shader_programme, "lightPosLego");
 	glUniform3fv(lightPosLocLego, 1, glm::value_ptr(lightPosLego));
 
 	//assign normals to lego
