@@ -30,6 +30,8 @@ float xv = 10, yv = 12, zv = 30; //originea sistemului de observare
 
 glm::vec3 lightPos(1000, 0, 0);
 glm::vec3 lightPos2(-1000, 0, 0);
+glm::vec3 lightPosLego;
+
 glm::vec3 viewPos(0, 0, 0);
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -162,6 +164,10 @@ void display()
 	GLuint lightPosLoc = glGetUniformLocation(shader_programme, "lightPos");
 	glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
 
+	GLuint lightPosition = glGetUniformLocation(shader_programme, "lightPos2");
+	glUniform3fv(lightPosition, 1, glm::value_ptr(lightPos2));
+
+
 	GLuint viewPosLoc = glGetUniformLocation(shader_programme, "viewPos");
 	glUniform3fv(viewPosLoc, 1, glm::value_ptr(viewPos));
 
@@ -171,11 +177,14 @@ void display()
 	modelMatrix *= glm::translate(glm::vec3(direction, 0, move));
 	modelMatrix *= glm::rotate(axisRotAngleLego, glm::vec3(0, 1, 0));
 
-	GLuint lightPosition = glGetUniformLocation(shader_programme, "lightPos2");
-	glUniform3fv(lightPosition, 1, glm::value_ptr(lightPos2));
-
+	
 	GLuint modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrixPerson * modelMatrix));
+
+	lightPosLego=glm::vec3(direction, 0, move);
+
+	GLuint lightPosLocLego = glGetUniformLocation(shader_programme, "lightPos");
+	glUniform3fv(lightPosLocLego, 1, glm::value_ptr(lightPosLego));
 
 	//assign normals to lego
 	glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelMatrix));
@@ -194,6 +203,10 @@ void display()
 	modelMatrix *= glm::rotate(PI / 2, glm::vec3(0, 1, 0));
 	modelMatrixLoc = glGetUniformLocation(shader_programme, "modelViewProjectionMatrix");
 	glUniformMatrix4fv(modelMatrixLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix * viewMatrix * modelMatrix));
+
+
+
+	
 
 	//assign normals to first car
 	normalMatrix = glm::transpose(glm::inverse(modelMatrix));

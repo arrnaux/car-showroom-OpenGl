@@ -49,7 +49,7 @@ void main()
 
 	color += lighting(objectColor, pos, normal, lightPos, viewPos, ambient, lightColor, specular, specPower);
 	lightColor = vec3(1.0, 0.0, 0);
-	color += lighting(objectColor, posLego, normal, lightPos2, viewPos, ambient, lightColor, specular, specPower);
+	color += lighting(objectColor, pos, normal, lightPos2, viewPos, ambient, lightColor, specular, specPower);
 	
 	fragColor = vec4(color, 1.0);
 }
